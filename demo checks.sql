@@ -1,4 +1,4 @@
--- DEMOGRAPHIC CHECKS
+-- DEMOGRAPHIC CHECKS FOR POWERSCHOOL
 
 -- duplicate student number
 select student_number, count(student_number) from Students
