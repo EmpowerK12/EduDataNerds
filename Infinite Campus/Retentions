@@ -18,7 +18,7 @@ left join customstudent cs on cs.personID = p.personID and cs.enrollmentID = enr
 where p.studentNumber is not null 
     and enr.active = 1
     and enr.enddate is null
-    and cs.attributeID = 607
+    and cs.attributeID = 607 -- Attribute ID is custom to the school. Different schools would need to use their custom id.
     /*Include a cs.[value] if you want to find a specific type. If you just want all retentions, run the query without one of the values.*/
    -- and cs.[value]='TY' -- This Year Retention
    -- and cs.[value]='PY' -- Previous Year Retention
