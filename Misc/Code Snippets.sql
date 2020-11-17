@@ -67,3 +67,6 @@ from sys.columns c
 	join sys.schemas s on s.schema_id=o.schema_id
 	join sys.types t on t.system_type_id=c.system_type_id or t.user_type_id=c.user_type_id
 	join sys.databases d on d.database_id <> 1 --I think this excludes the master database but I can't remember :-S
+
+
+--This is a test
