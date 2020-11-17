@@ -23,7 +23,8 @@ s.student_number
 FROM students s
 JOIN schools on s.schoolid = schools.school_number
 
--- Subquery selects only current enrollments from the CC table (faster than joining directly to CC table then filtering)
+/* Subquery selects only CURRENT enrollments from the CC table (faster than joining directly to CC table then filtering).
+Adjust the where clause to select dropped classes as well.*/
 LEFT JOIN (
   SELECT
   crs.course_name
