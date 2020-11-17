@@ -133,7 +133,7 @@ LEFT JOIN edfi.StudentEducationOrganizationAssociation AS ethnicity
 LEFT Join (
 
 SELECT I.*, D.CodeValue AS [Value]
-	FROM edfi.StudentEducationOrganizationAssociationDisability AS I 
+	FROM edfi.StudentEducationOrganizationAssociationDisability AS I --if using the start and end dates on this table, need to add additional code
 	LEFT JOIN edfi.Descriptor AS D
 		ON I.DisabilityDescriptorId = D.DescriptorId  where d.CodeValue='IEP') AS iep
 	
@@ -145,7 +145,7 @@ SELECT I.*, D.CodeValue AS [Value]
 LEFT Join (
 
 SELECT I.*, D.CodeValue AS [Value]
-	FROM edfi.StudentEducationOrganizationAssociationDisability AS I 
+	FROM edfi.StudentEducationOrganizationAssociationDisability AS I  --if using the start and end dates on this table, need to add additional code
 	LEFT JOIN edfi.Descriptor AS D
 		ON I.DisabilityDescriptorId = D.DescriptorId  where d.CodeValue='504 Plan') AS s504
 	
@@ -168,7 +168,7 @@ LEFT JOIN(SELECT I.*, D.CodeValue AS [Value]
 
 --Getting Homeless
 LEFT JOIN(SELECT I.*, D.CodeValue AS [Value]
-	FROM edfi.StudentEducationOrganizationAssociationStudentCharacteristic AS I 
+	FROM edfi.StudentEducationOrganizationAssociationStudentCharacteristic AS I  --if using the start and end dates on this table, need to add additional code
 	LEFT JOIN edfi.Descriptor AS D
 		ON I.StudentCharacteristicDescriptorId = D.DescriptorId  where d.CodeValue='Homeless'
 ) homeless
@@ -177,7 +177,7 @@ LEFT JOIN(SELECT I.*, D.CodeValue AS [Value]
 
 --Getting At-Risk
 LEFT JOIN(SELECT I.*, D.CodeValue AS [Value]
-	FROM edfi.StudentEducationOrganizationAssociationStudentCharacteristic AS I 
+	FROM edfi.StudentEducationOrganizationAssociationStudentCharacteristic AS I  --if using the start and end dates on this table, need to add additional code
 	LEFT JOIN edfi.Descriptor AS D
 		ON I.StudentCharacteristicDescriptorId = D.DescriptorId  where d.CodeValue='At-Risk'
 ) risk
