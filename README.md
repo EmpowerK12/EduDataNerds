@@ -1,4 +1,4 @@
-# DC EduDataNerds Repository.  
+# DC EduDataNerds SQL Repository.  
 Let's figure this out together!
 
 1. Organize the queries by SIS or data system.  To put a file in a folder (or to move the file), just name or rename the file [Folder Name]/[File Name]
