@@ -1,7 +1,8 @@
 /* A query to select a long table of current student class enrollments
 One row per student per class including period, teacher, entry date
 Useful for checking that all kids are appropriately enrolled, sharing student schedules, etc
-Written for Powerschool tables in Oracle */
+Written for Powerschool tables in Oracle 
+Contributed by Katie Newmark (katie.newmark@kippdc.org) */
 
 SELECT 
 s.student_number
@@ -22,7 +23,8 @@ s.student_number
 FROM students s
 JOIN schools on s.schoolid = schools.school_number
 
--- Subquery selects only current enrollments from the CC table (faster than joining directly to CC table then filtering)
+/* Subquery selects only CURRENT enrollments from the CC table (faster than joining directly to CC table then filtering).
+Adjust the where clause to select dropped classes as well.*/
 LEFT JOIN (
   SELECT
   crs.course_name
