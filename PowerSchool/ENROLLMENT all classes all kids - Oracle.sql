@@ -1,7 +1,8 @@
 /* A query to select a long table of current student class enrollments
 One row per student per class including period, teacher, entry date
 Useful for checking that all kids are appropriately enrolled, sharing student schedules, etc
-Written for Powerschool tables in Oracle */
+Written for Powerschool tables in Oracle 
+Contributed by Katie Newmark (katie.newmark@kippdc.org) */
 
 SELECT 
 s.student_number
