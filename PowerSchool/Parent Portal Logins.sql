@@ -1,3 +1,5 @@
+--This statement lists parent portal login attempts (student name and parent name) ordered by date.
+
 SELECT s.STUDENT_NUMBER, s.LASTFIRST,s.GRADE_LEVEL, g.FIRSTNAME,g.LASTNAME,paah.LOGINATTEMPTDATE FROM GUARDIANSTUDENT gs
 JOIN STUDENTS s on gs.STUDENTSDCID = s.DCID
 JOIN GUARDIAN g ON gs.GUARDIANID = g.GUARDIANID
