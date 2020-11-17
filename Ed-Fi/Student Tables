@@ -1,0 +1,281 @@
+---Wide Table (see further down for long table)
+
+SELECT main.StudentUniqueId AS LocalStudentID
+	, usi.IdentificationCode AS USI 
+	, altid.IdentificationCode AS AlternateStudentID
+	, CONCAT(main.LastSurname, ', ', main.FirstName) AS [Name]
+	, sex.CodeValue AS Sex
+	, main.Birthdate AS Birthdate
+	, [current].GradeLevel AS CurrentGradeLevel
+	, [current].DescriptorId AS GradeSort
+	, CASE
+		WHEN [current].ExitWithdrawDate > getdate() THEN 'Active'
+		ELSE 'Not Active' 
+		END AS EnrollStatus
+	, [current].SchoolName AS CurrentSchool
+	, race.Race AS Race
+	, ethnicity.HispanicLatinoEthnicity AS HispanicLatinoEthnicity
+	, CASE 
+		WHEN ethnicity.HispanicLatinoEthnicity = 1 THEN 'Hispanic/Latino'
+		ELSE race.Race
+		END AS RaceEthnicity
+	, CASE 
+		WHEN iep.Value IS NULL THEN 'No IEP'
+		ELSE iep.Value
+		END AS IEP
+	, CASE 
+		WHEN s504.Value IS NULL THEN 'No 504Plan'
+		ELSE s504.Value
+		END AS Section504Plan
+	, CASE 
+		WHEN risk.Value IS NULL THEN 'Not At-Risk'
+		ELSE risk.Value
+		END AS AtRisk
+	, CASE
+		WHEN lep.LimitedEnglishProficiencyDescriptorId IS NULL THEN 'Not LEP'
+		ELSE 'LEP' 
+		END AS LimitedEnglishProficiency
+	, CASE 
+		WHEN homeless.Value IS NULL THEN 'Not Homeless'
+		ELSE homeless.Value
+		END AS Homeless
+	, CASE 
+		WHEN food.Value is null then 'Full Price'
+		Else food.Value
+		END AS SchoolFoodServicesEligibility
+	, cohort.IdentificationCode AS Cohort
+	, cy.First9Year AS First9thGradeYear
+	, lea.Years AS YearsAtLEA
+	, NULL AS ServiceHours
+	, ad.[Address] AS [Address]
+	, NULL AS Ward
+
+FROM edfi.Student AS main
+
+
+-- Getting USI
+LEFT JOIN (
+	SELECT I.*, D.CodeValue AS [Value]
+	FROM edfi.StudentEducationOrganizationAssociationStudentIdentificationCode AS I 
+	LEFT JOIN edfi.Descriptor AS D
+		ON I.StudentIdentificationSystemDescriptorId = D.DescriptorId  where d.CodeValue='USI') AS usi
+	
+	ON main.StudentUSI = usi.StudentUSI
+
+
+-- Getting Alternate ID
+LEFT JOIN (
+	SELECT I.*, D.CodeValue AS [Value]
+	FROM edfi.StudentEducationOrganizationAssociationStudentIdentificationCode AS I 
+	LEFT JOIN edfi.Descriptor AS D
+		ON I.StudentIdentificationSystemDescriptorId = D.DescriptorId  where d.CodeValue='Alternate') AS altid
+	
+	ON main.StudentUSI = altid.StudentUSI
+
+
+-- Getting Cohort (homeroom or house)
+LEFT JOIN (
+	SELECT I.*, D.CodeValue AS [Value]
+	FROM edfi.StudentEducationOrganizationAssociationStudentIdentificationCode AS I 
+	LEFT JOIN edfi.Descriptor AS D
+		ON I.StudentIdentificationSystemDescriptorId = D.DescriptorId  where d.CodeValue in ('House', 'Homeroom')) AS cohort
+	
+	ON main.StudentUSI = cohort.StudentUSI
+
+
+-- Getting Sex
+LEFT JOIN edfi.Descriptor AS sex
+	ON main.BirthSexDescriptorId = sex.DescriptorId
+
+
+-- Getting CurrentGradeLevel, CurrentSchool and EnrollStatus
+LEFT JOIN (
+	SELECT C.StudentUSI, eo.ShortNameOfInstitution AS SchoolName, D.CodeValue AS GradeLevel
+		, D.DescriptorId, coalesce(C.ExitWithdrawDate, concat(SchoolYear, '-06-30')) as ExitWithdrawDate, w.CodeValue AS ExitType, C.SchoolYear
+	FROM (
+		SELECT ROW_NUMBER() OVER (PARTITION BY StudentUSI ORDER BY EntryDate DESC) row_num, *
+		FROM [edfi].[StudentSchoolAssociation]
+		) AS C
+
+	LEFT JOIN edfi.EducationOrganization AS eo
+		ON C.SchoolId = eo.EducationOrganizationId
+
+	LEFT JOIN edfi.Descriptor AS D
+		ON C.EntryGradeLevelDescriptorId = D.DescriptorId and d.Namespace='GradeLevelDescriptor'
+
+	LEFT JOIN edfi.Descriptor AS w
+		ON C.ExitWithdrawTypeDescriptorId = w.DescriptorId  and w.Namespace='ExitWithdrawTypeDescriptor'
+
+	WHERE row_num = 1) AS [current]
+
+	ON main.StudentUSI = [current].StudentUSI
+
+
+-- Getting Race
+LEFT JOIN (
+	select StudentUSI, case when Race like '%;%' then 'Two or More Races' else CodeValue end as Race from
+
+(select StudentUSI, String_AGG(RaceDescriptorId, ';') as Race 
+
+FROM edfi.StudentEducationOrganizationAssociationRace r group by StudentUSI) r
+
+left join edfi.Descriptor d on cast(d.DescriptorId as nvarchar)=r.Race and d.Namespace='RaceDescriptor') AS Race
+
+	ON main.StudentUSI = race.StudentUSI
+
+
+-- Getting Ethnicity
+LEFT JOIN edfi.StudentEducationOrganizationAssociation AS ethnicity
+	ON main.StudentUSI = ethnicity.StudentUSI
+
+
+-- Getting IEP 
+LEFT Join (
+
+SELECT I.*, D.CodeValue AS [Value]
+	FROM edfi.StudentEducationOrganizationAssociationDisability AS I 
+	LEFT JOIN edfi.Descriptor AS D
+		ON I.DisabilityDescriptorId = D.DescriptorId  where d.CodeValue='IEP') AS iep
+	
+	ON main.StudentUSI = iep.StudentUSI
+
+
+-- Getting Secttion504Plan
+
+LEFT Join (
+
+SELECT I.*, D.CodeValue AS [Value]
+	FROM edfi.StudentEducationOrganizationAssociationDisability AS I 
+	LEFT JOIN edfi.Descriptor AS D
+		ON I.DisabilityDescriptorId = D.DescriptorId  where d.CodeValue='504 Plan') AS s504
+	
+	ON main.StudentUSI = s504.StudentUSI
+
+
+-- Getting LimitedEnglishProficiency
+LEFT JOIN edfi.StudentEducationOrganizationAssociation AS lep
+	ON main.StudentUSI = lep.StudentUSI
+		   
+
+-- Getting FoodElgibility
+LEFT JOIN(SELECT I.*, D.CodeValue AS [Value]
+	FROM edfi.StudentEducationOrganizationAssociationStudentCharacteristic AS I 
+	LEFT JOIN edfi.Descriptor AS D
+		ON I.StudentCharacteristicDescriptorId = D.DescriptorId  where d.CodeValue in ('Free', 'Reduced', 'Community Eligible')
+) food
+	ON main.StudentUSI = food.StudentUSI
+
+
+--Getting Homeless
+LEFT JOIN(SELECT I.*, D.CodeValue AS [Value]
+	FROM edfi.StudentEducationOrganizationAssociationStudentCharacteristic AS I 
+	LEFT JOIN edfi.Descriptor AS D
+		ON I.StudentCharacteristicDescriptorId = D.DescriptorId  where d.CodeValue='Homeless'
+) homeless
+	ON main.StudentUSI = homeless.StudentUSI
+
+
+--Getting At-Risk
+LEFT JOIN(SELECT I.*, D.CodeValue AS [Value]
+	FROM edfi.StudentEducationOrganizationAssociationStudentCharacteristic AS I 
+	LEFT JOIN edfi.Descriptor AS D
+		ON I.StudentCharacteristicDescriptorId = D.DescriptorId  where d.CodeValue='At-Risk'
+) risk
+	ON main.StudentUSI = risk.StudentUSI
+
+
+-- Getting First9thGradeYear
+LEFT JOIN 
+	(select StudentUSI,concat(right(schoolyear,2)-1,'-',right(schoolyear,2)) as First9Year
+		FROM [edfi].[StudentEducationOrganizationAssociationCohortYear] cy
+			join edfi.descriptor d on d.DescriptorId=cy.CohortYearTypeDescriptorId
+			 where CodeValue='First Ninth Grade Year') cy
+	on cy.studentusi=main.studentusi
+
+
+-- Getting YearsAtLEA
+LEFT JOIN 
+	(SELECT N.StudentUSI, Count(distinct N.SchoolYear) AS Years
+	FROM edfi.StudentSchoolAssociation AS N
+	WHERE DATEDIFF(day, N.EntryDate,  coalesce(N.ExitWithdrawDate, concat(N.SchoolYear, '-06-30'))) >= 150
+	GROUP BY N.StudentUSI) AS lea
+	ON main.StudentUSI = lea.StudentUSI
+
+
+-- Getting Address 
+LEFT JOIN (
+	SELECT StudentUSI
+		, A.StreetNumberName+COALESCE(' '+A.ApartmentRoomSuiteNUmber,'')+COALESCE(' '+A.BuildingSiteNUmber,'')+COALESCE(' '+A.City,'')+COALESCE(' '+st.CodeValue,'')+COALESCE(' '+A.PostalCode,'') AS [Address]
+	FROM edfi.StudentEducationOrganizationAssociationAddress AS A
+
+	LEFT JOIN edfi.Descriptor AS st
+		ON A.StateAbbreviationDescriptorId = st.DescriptorId and st.Namespace='StateAbbreviationDescriptor') AS ad
+
+	ON main.StudentUSI = ad.StudentUSI
+
+
+
+-----------------------------
+
+--Long table (from the wide table above)
+
+select 
+LocalStudentID
+,IEP as [Group]
+,case when IEP='IEP' then 1 when IEP='No IEP' then 2 end as GroupSort
+,'IEP Status' as GroupType
+,2 as GroupTypeSort
+from ComprehensiveDashboard.Student
+where EnrollStatus='Active'
+
+union
+
+select 
+LocalStudentID
+,AtRisk as [Group]
+,case when AtRisk='At-Risk' then 3 when AtRisk='Not At-Risk' then 4 end as GroupSort
+,'At Risk Status' as GroupType
+,3 as GroupTypeSort
+from ComprehensiveDashboard.Student
+where EnrollStatus='Active'
+
+union
+
+select 
+LocalStudentID
+,RaceEthnicity as [Group]
+,case when RaceEthnicity='Black or African American' then 5 
+	when RaceEthnicity='Hispanic/Latino' then 6 
+	when RaceEthnicity='White' then 7 
+	when RaceEthnicity='Asian' then 8 
+	when RaceEthnicity='American Indian and Alaskan Native' then 9
+	when RaceEthnicity='Native Hawaiian or Pacific Islander' then 10
+	when RaceEthnicity='Two or More Races' then 11 end as GroupSort
+,'Race/Ethnicity' as GroupType
+,4 as GroupTypeSort
+from ComprehensiveDashboard.Student
+where EnrollStatus='Active'
+
+union
+
+select 
+LocalStudentID
+,'All Students' as [Group]
+,0 as GroupSort
+,'All Students' as GroupType
+,1 as GroupTypeSort
+from ComprehensiveDashboard.Student
+where EnrollStatus='Active'
+
+
+union
+
+select 
+LocalStudentID
+, concat('Grade ',CurrentGradeLevel) as [Group]
+,11+GradeSort as GroupSort
+,'Current Grade Level' as GroupType
+,5 as GroupTypeSort
+from ComprehensiveDashboard.Student
+where EnrollStatus='Active'
+
