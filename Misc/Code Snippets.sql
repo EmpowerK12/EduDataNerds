@@ -26,8 +26,8 @@ select
 	,c.precision -- decimal(precision,scale)
 	,c.scale 
 from sys.columns c 
-join sys.objects o on c.object_id=o.object_id 
-join sys.types t on t.system_type_id=c.system_type_id or t.user_type_id=c.user_type_id
+	join sys.objects o on c.object_id=o.object_id 
+	join sys.types t on t.system_type_id=c.system_type_id or t.user_type_id=c.user_type_id
 where 1=1
 	and o.name like '%graduation%'
 	and c.name like '%cohortYearNCLB%'
@@ -39,8 +39,8 @@ where 1=1
 --Replace the word SearchTerm below
 select o.name,c.name 
 from sys.columns c inner join sys.objects  o on c.object_id=o.object_id 
-and o.type = 'U'
-and CHARINDEX('SearchTerm', c.name)>=1
+	and o.type = 'U'
+	and CHARINDEX('SearchTerm', c.name)>=1
 
 
 
@@ -63,7 +63,7 @@ select
 	,c.scale 
 
 from sys.columns c 
-inner join sys.objects  o on c.object_id=o.object_id and o.type = 'U'
-join sys.schemas s on s.schema_id=o.schema_id
-join sys.types t on t.system_type_id=c.system_type_id or t.user_type_id=c.user_type_id
-join sys.databases d on d.database_id <> 1 --I think this excludes the master database but I can't remember :-S
+	inner join sys.objects  o on c.object_id=o.object_id and o.type = 'U'
+	join sys.schemas s on s.schema_id=o.schema_id
+	join sys.types t on t.system_type_id=c.system_type_id or t.user_type_id=c.user_type_id
+	join sys.databases d on d.database_id <> 1 --I think this excludes the master database but I can't remember :-S
